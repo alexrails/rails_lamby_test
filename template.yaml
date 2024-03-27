@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: RailsLambyTest
+
+Parameters:
+
+  RailsEnv:
+    Type: String
+    Default: staging
+    AllowedValues:
+      - staging
+      - production
+
+Globals:
+  Function:
+    Architectures:
+      - x86_64
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: AllAtOnce
+    Environment:
+      Variables:
+        RAILS_ENV: !Ref RailsEnv
+        PG_URL: '{{resolve:secretsmanager:prod/lamby/pg:SecretString:PG_URL}}'
+    Timeout: 30
+    VpcConfig:
+        SubnetIds:
+          - subnet-034a6a26cba7f1158
+          - subnet-09ad1488202fcccb2
+          - subnet-0c774a938dc9f5521
+        SecurityGroupIds:
+          - sg-07d866d109daf6bc2
+
+Resources:
+
+  RailsLambda:
+    Type: AWS::Serverless::Function
+    Metadata:
+      DockerContext: .
+      Dockerfile: Dockerfile
+      DockerTag: web
+    Properties:
+      FunctionUrlConfig:
+        AuthType: NONE
+      MemorySize: 1792
+      PackageType: Image
+
+Outputs:
+
+  RailsLambdaUrl:
+    Description: Lambda Function URL
+    Value: !GetAtt RailsLambdaUrl.FunctionUrl
